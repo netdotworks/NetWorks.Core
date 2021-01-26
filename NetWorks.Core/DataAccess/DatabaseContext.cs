@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NetWorks.Core.Infrastructure;
 using System;
 using System.Linq;
 
@@ -12,9 +13,15 @@ namespace NetWorks.Core.DataAccess
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            var assembly = typeof(DatabaseContext).Assembly;
+            var typeFinder = new AppDomainTypeFinder();
+            var typeConfigs = typeFinder.FindClassesOfType(typeof(IEntityTypeConfiguration<>));
 
-            modelBuilder.ApplyConfigurationsFromAssembly(assembly);
+            foreach (var typeConfig in typeConfigs)
+            {
+                var instance = (IMapper)Activator.CreateInstance(typeConfig);
+                instance.ApplyConfiguration(modelBuilder);
+            }
+
 
             base.OnModelCreating(modelBuilder);
         }
